@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.scit.shop.dao.BookMapper">
+
+<select id="selectAll" resultType="Book">
+	SELECT * FROM book
+</select>
+
+<select id="detailBook" parameterType="int" resultType="Book">
+	SELECT * FROM book
+	WHERE
+		code = #{code}
+</select>
+
+<!-- 관심상품 저장 -->
+<insert id="wishList" parameterType="Wishlist">
+	INSERT INTO wishlist
+	VALUES
+		(#{userid}, #{code})
+</insert>
+
+<!-- 관심 상품 목록 -->
+<select id="wishItemList" resultType="Book" parameterType="string">
+SELECT * FROM book
+WHERE code IN
+ 	(SELECT code FROM wishlist WHERE userid = #{userid})
+</select>
+
+<!-- 상품 구매 -->
+<insert id="purchaseList" parameterType="Sale" >
+    insert into sale
+    	(
+    	 userid, code, cnt, purchasedate
+    	
+    	)
+    	
+    values(
+         #{userid}, #{code}, #{cnt}, sysdate
+        )
+</insert>
+
+<!-- 재고 수량 변경 -->
+<update id="sell" parameterType="hashMap">
+		update
+			book
+		set
+			quantity = quantity - #{count}
+		where
+			code = #{code}
+</update>
+
+
+<!--  -->
+<select id="purchaseAll" resultType="Result" parameterType="string">
+select 
+	s.userid, to_char(s.purchasedate, 'YYYY-MM-DD')as purchasedate, b.code, b.title, b.price, s.cnt, sum(b.price*s.cnt) as cal 
+from  
+	sale s, book b
+where
+	s.code = b.code and s.userid=#{userid}
+group by 
+	s.purchasedate, b.code, b.title, b.price, s.cnt, s.userid
+ORDER BY s.purchasedate desc
+</select>
+
+
+<!-- 관심상품 삭제 -->
+<delete id="delete" parameterType="int">
+DELETE 
+	wishlist
+WHERE
+	code=#{code}
+</delete>
+
+
+<!-- 베스트셀러 -->
+<select id="bestSeller" parameterType="Best" resultType="Best">
+SELECT DISTINCT i.code, i.title, s.cnt, i.price
+FROM sale s INNER JOIN book i on s.code = i.code
+WHERE 
+s.cnt = (
+    SELECT
+        MAX(s.cnt)
+    FROM sale s
+    )
+</select>
+
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
